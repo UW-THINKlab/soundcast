@@ -837,8 +837,21 @@ def hdf5_trips_to_Emme(my_project, hdf_filename):
         
         #Regular Daysim Output:            
         else:
-            if vot[x] < 13.07: vot[x]=1
-            elif vot[x] < 26.14: vot[x]=2
+         #vot varies dependent on mode, This should probably be an input configuration
+
+         if  mode[x] == 3 or mode <3 or mode > 5:
+            if vot[x] < 9: vot[x]=1
+            elif vot[x] < 20: vot[x]=2
+            else: vot[x]=3
+
+         elif mode[x] == 4:
+            if vot[x] < 12: vot[x]=1
+            elif vot[x] < 22: vot[x]=2
+            else: vot[x]=3
+         
+         elif mode[x] == 5:
+            if vot[x] < 14 : vot[x]=1
+            elif vot[x] < 25: vot[x]=2
             else: vot[x]=3
 
         #get the matrix name from matrix_dict. Throw out school bus (8) for now.
