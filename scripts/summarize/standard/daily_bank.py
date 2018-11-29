@@ -102,9 +102,14 @@ def export_link_values(my_project):
             
     df.to_csv(daily_network_fname)
 
+
+
+
+
 def main():
     print 'creating daily bank'
     #Use a copy of an existing bank for the daily bank
+    
     copy_emmebank('Banks/7to8', 'Banks/Daily')
 
     daily_emmebank =_emmebank.Emmebank(r'Banks/Daily/emmebank')
@@ -172,7 +177,27 @@ def main():
         path = os.path.join('Banks', tod, 'emmebank')
         bank = _emmebank.Emmebank(path)
         scenario = bank.scenario(1002)
+        if scenario.extra_attribute('@tveh'):
+            scenario.delete_extra_attribute('@tveh')
+        if scenario.extra_attribute('@mveh'):
+            scenario.delete_extra_attribute('@mveh')
+        if scenario.extra_attribute('@hveh'):
+            scenario.delete_extra_attribute('@hveh')
+        if scenario.extra_attribute('@bveh'):
+            scenario.delete_extra_attribute('@bveh')
+            
+        scenario.create_extra_attribute('LINK', '@tveh')
+        scenario.create_extra_attribute('LINK', '@mveh')
+        scenario.create_extra_attribute('LINK', '@hveh')
+        scenario.create_extra_attribute('LINK', '@bveh')
+        
         network = scenario.get_network()
+        for link in network.links():
+            link['@mveh'] = link['@metrk']/1.5
+            link['@hveh'] = link['@hvtrk']/2.0
+            #link['@bveh'] = link['trnv3']/2.5
+            link['@tveh'] = link['@svtl1'] + link['@svtl2'] + link['@svtl3'] 
+            + link['@h2tl1'] + link['@h2tl2'] + link['@h2tl3'] + link['@h3tl1'] + link['@h3tl2'] + link['@h3tl3'] + link['@lttrk'] + link['@mveh'] + link['@hveh'] + link['@bveh']
         if daily_scenario.extra_attribute('@v' + tod[:4]):
             daily_scenario.delete_extra_attribute('@v' + tod[:4])
         attr = daily_scenario.create_extra_attribute('LINK', '@v' + tod[:4])

@@ -263,8 +263,8 @@ def run_importer(project_name):
         my_project.process_turn('inputs/scenario/networks/turns/' + value + turns_name)
         if my_project.tod in load_transit_tod:
            my_project.process_vehicles('inputs/scenario/networks/' + transit_vehicle_file)
-           my_project.process_transit('inputs/scenario/networks/transit/' + value + transit_name)
-           update_headways(my_project, headway_df)
+           #my_project.process_transit('inputs/scenario/networks/transit/' + value + transit_name)
+           #update_headways(my_project, headway_df)
         #import tolls
         import_tolls(my_project)
         arterial_delay(my_project, rdly_factor)

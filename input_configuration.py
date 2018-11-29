@@ -7,17 +7,17 @@ import os
 # Scenario and input paths
 #####################################################################
 base_year = '2014'  # This should always be 2014 unless the base year changes
-scenario_name = '2014_lodes'
+scenario_name = '2014'
 model_year = '2014'
-main_inputs_folder = 'R:/SoundCast/Inputs'
+main_inputs_folder = 'R:/SoundCast/Inputs/lodes/vision'
 #####################################################################
 
 ######Set up:######
-run_accessibility_calcs = True
-run_copy_daysim_code = True
-run_setup_emme_project_folders = True
-run_setup_emme_bank_folders = True
-run_copy_scenario_inputs = True
+run_accessibility_calcs = False
+run_copy_daysim_code = False
+run_setup_emme_project_folders = False
+run_setup_emme_bank_folders = False
+run_copy_scenario_inputs = False
 run_import_networks = True
 #only run_daysim_zone_inputs in the base year currently
 run_daysim_zone_inputs = True
@@ -68,9 +68,9 @@ add_hot_lane_tolls = False
 hot_rate_dict = {'am' : 35, 'md' : 10, 'pm' : 35, 'ev' : 10, 'ni' : 10}
 
 ###### Model iterations, population sampling, log files, etc.######
-pop_sample = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+pop_sample = [1]
 # Assignment Iterations (must be same length as pop_sample:
-max_iterations_list = [10, 100, 100, 100, 100, 100, 100, 100, 100]
+max_iterations_list = [10]
 min_pop_sample_convergence_test = 10
 # start building shadow prices - only run work locations
 shadow_work = [2, 1, 1, 1]

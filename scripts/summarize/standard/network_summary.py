@@ -833,7 +833,7 @@ def main():
 
     daily_counts(writer, my_project)
 
-    freeflow_skims(my_project)
+    #freeflow_skims(my_project)
 
     if run_truck_summary:
     	truck_summary(df_counts=df_truck_counts, my_project=my_project, writer=writer)
@@ -921,57 +921,57 @@ def main():
             df.to_csv(network_results_path, index=False)
 
         #TRANSIT:
-        if my_project.tod in transit_tod.keys():
-            for name, desc in transit_extra_attributes_dict.iteritems():
-                my_project.create_extra_attribute('TRANSIT_LINE', name, desc, 'True')
-            #calc_transit_link_volumes(my_project)
-            calc_transit_line_atts(my_project)
-            transit_results = get_transit_boardings_time(my_project)
-            transit_summary_dict[key] = transit_results[0]
-            transit_atts.extend(transit_results[1])
-            #transit_atts = list(set(transit_atts))
+        #if my_project.tod in transit_tod.keys():
+        #    for name, desc in transit_extra_attributes_dict.iteritems():
+        #        my_project.create_extra_attribute('TRANSIT_LINE', name, desc, 'True')
+        #    #calc_transit_link_volumes(my_project)
+        #    calc_transit_line_atts(my_project)
+        #    transit_results = get_transit_boardings_time(my_project)
+        #    transit_summary_dict[key] = transit_results[0]
+        #    transit_atts.extend(transit_results[1])
+        #    #transit_atts = list(set(transit_atts))
         
-            network = my_project.current_scenario.get_network()
-            ons = {}
-            offs = {}
+        #    network = my_project.current_scenario.get_network()
+        #    ons = {}
+        #    offs = {}
             
-            for node in network.nodes():
-                ons[int(node.id)] = node.initial_boardings
-                offs[int(node.id)] = node.final_alightings
+        #    for node in network.nodes():
+        #        ons[int(node.id)] = node.initial_boardings
+        #        offs[int(node.id)] = node.final_alightings
             
-            df = pd.DataFrame() # temp dataFrame to append to stop_df
-            df['inode'] = ons.keys()
-            df['initial_boardings'] = ons.values()
-            df['final_alightings'] = offs.values()
-            df['tod'] = my_project.tod
+        #    df = pd.DataFrame() # temp dataFrame to append to stop_df
+        #    df['inode'] = ons.keys()
+        #    df['initial_boardings'] = ons.values()
+        #    df['final_alightings'] = offs.values()
+        #    df['tod'] = my_project.tod
 
-            stop_df = stop_df.append(df)
+        #    stop_df = stop_df.append(df)
 
-            # Transit segment values
-            # boardings = {}
-            # line = {}
+        #    # Transit segment values
+        #    # boardings = {}
+        #    # line = {}
 
-            boardings = []
-            line = []
-            inode = []
+        #    boardings = []
+        #    line = []
+        #    inode = []
 
-            for tseg in network.transit_segments():
-                boardings.append(tseg.transit_boardings)
-                line.append(tseg.line.id)
-                inode.append(tseg.i_node.number)
+        #    for tseg in network.transit_segments():
+        #        boardings.append(tseg.transit_boardings)
+        #        line.append(tseg.line.id)
+        #        inode.append(tseg.i_node.number)
 
-                # boardings[tseg.i_node.number] = tseg.transit_boardings
-                # line[tseg.i_node.number] = tseg.line.id
+        #        # boardings[tseg.i_node.number] = tseg.transit_boardings
+        #        # line[tseg.i_node.number] = tseg.line.id
             
-            df = pd.DataFrame([inode,boardings,line]).T
-            df.columns = ['inode','total_boardings','line']
-            df['tod'] = my_project.tod
-            # df['inode'] = boardings.keys()
-            # df['line'] = line.values()
-            # df['total_boardings'] = boardings.values()
+        #    df = pd.DataFrame([inode,boardings,line]).T
+        #    df.columns = ['inode','total_boardings','line']
+        #    df['tod'] = my_project.tod
+        #    # df['inode'] = boardings.keys()
+        #    # df['line'] = line.values()
+        #    # df['total_boardings'] = boardings.values()
             
 
-            seg_df = seg_df.append(df)
+        #    seg_df = seg_df.append(df)
 
           
         net_stats = calc_vmt_vht_delay_by_ft(my_project)
@@ -997,10 +997,10 @@ def main():
         #screen lines
         get_screenline_volumes(screenline_dict, my_project)
 
-        # bike volumes
-        if key in ['5to6','7to8','8to9','9to10','10to14','14to15','15to16','16to17',
-                        '17to18']:
-            bike_volumes(writer=writer, my_project=my_project, tod=key)
+        ## bike volumes
+        #if key in ['5to6','7to8','8to9','9to10','10to14','14to15','15to16','16to17',
+        #                '17to18']:
+        #    bike_volumes(writer=writer, my_project=my_project, tod=key)
         
     list_of_measures = ['vmt', 'vht', 'delay']
 
@@ -1008,37 +1008,37 @@ def main():
     # seg_df.to_excel(excel_writer=writer, sheet_name='Segments')
     
     # combine initial and final boardings for transfers
-    seg_df = seg_df.groupby('inode').sum().reset_index()
-    seg_df = seg_df.drop(['tod','line'], axis=1)
-    stop_df = stop_df.groupby('inode').sum().reset_index()
-    transfer_df = pd.merge(stop_df, seg_df, on='inode')
-    transfer_df['transfers'] = transfer_df['total_boardings'] - transfer_df['initial_boardings']
-    transfer_df.to_excel(excel_writer=writer, sheet_name='Transfers by Stop')
+    #seg_df = seg_df.groupby('inode').sum().reset_index()
+    #seg_df = seg_df.drop(['tod','line'], axis=1)
+    #stop_df = stop_df.groupby('inode').sum().reset_index()
+    #transfer_df = pd.merge(stop_df, seg_df, on='inode')
+    #transfer_df['transfers'] = transfer_df['total_boardings'] - transfer_df['initial_boardings']
+    #transfer_df.to_excel(excel_writer=writer, sheet_name='Transfers by Stop')
 
-    # Compute daily boardings for light-rail and major stops    
-    light_rail(df=transfer_df, writer=writer)
+    ## Compute daily boardings for light-rail and major stops    
+    #light_rail(df=transfer_df, writer=writer)
 
    #write out transit:
     # print uc_vmt_dict
     col = 0
     transit_df = pd.DataFrame()
 
-    for tod, df in transit_summary_dict.iteritems():
+    #for tod, df in transit_summary_dict.iteritems():
         
-       workbook = writer.book
-       index_format = workbook.add_format({'align': 'left', 'bold': True, 'border': True})
-       transit_df = pd.merge(transit_df, df, 'outer', left_index = True, right_index = True)
-       #transit_df[tod + '_board'] = df[tod + '_board']
-       #transit_df[tod + '_time'] = df[tod + '_time']
+    #   workbook = writer.book
+    #   index_format = workbook.add_format({'align': 'left', 'bold': True, 'border': True})
+    #   transit_df = pd.merge(transit_df, df, 'outer', left_index = True, right_index = True)
+    #   #transit_df[tod + '_board'] = df[tod + '_board']
+    #   #transit_df[tod + '_time'] = df[tod + '_time']
     
-    transit_df = transit_df[['5to6_board', '5to6_time', '6to7_board', '6to7_time', '7to8_board', '7to8_time', '8to9_board', '8to9_time', '9to10_board', \
-        '9to10_time', '10to14_board', '10to14_time', '14to15_board', '14to15_time', '15to16_board', '15to16_time', '16to17_board', '16to17_time', \
-        '17to18_board', '17to18_time', '18to20_board', '18to20_time']]
-    transit_atts_df = pd.DataFrame(transit_atts)
-    transit_atts_df = transit_atts_df.drop_duplicates(['id'], keep='last')
-    transit_df.reset_index(level=0, inplace=True)
-    transit_atts_df = transit_atts_df.merge(transit_df, 'inner', right_on=['id'], left_on=['id'])
-    transit_atts_df.to_excel(excel_writer = writer, sheet_name = 'Transit Summaries')
+    #transit_df = transit_df[['5to6_board', '5to6_time', '6to7_board', '6to7_time', '7to8_board', '7to8_time', '8to9_board', '8to9_time', '9to10_board', \
+    #    '9to10_time', '10to14_board', '10to14_time', '14to15_board', '14to15_time', '15to16_board', '15to16_time', '16to17_board', '16to17_time', \
+    #    '17to18_board', '17to18_time', '18to20_board', '18to20_time']]
+    #transit_atts_df = pd.DataFrame(transit_atts)
+    #transit_atts_df = transit_atts_df.drop_duplicates(['id'], keep='last')
+    #transit_df.reset_index(level=0, inplace=True)
+    #transit_atts_df = transit_atts_df.merge(transit_df, 'inner', right_on=['id'], left_on=['id'])
+    #transit_atts_df.to_excel(excel_writer = writer, sheet_name = 'Transit Summaries')
        
 
     #*******write out counts:
@@ -1108,18 +1108,18 @@ def main():
     # Write notebooks based on these outputs to HTML
 
     # try:
-    for sheet in ['topsheet','metrics']:
-        with open("scripts/summarize/notebooks/"+sheet+".ipynb") as f:
-                nb = nbformat.read(f, as_version=4)
-        ep = ExecutePreprocessor(timeout=600, kernel_name='python2')
-        ep.preprocess(nb, {'metadata': {'path': 'scripts/summarize/notebooks/'}})
-        with open('scripts/summarize/notebooks/'+sheet+'.ipynb', 'wt') as f:
-            nbformat.write(nb, f)
-        os.system("jupyter nbconvert --to HTML scripts/summarize/notebooks/"+sheet+".ipynb")
-        # Move these files to output
-        if os.path.exists(r"outputs/"+sheet+".html"):
-            os.remove(r"outputs/"+sheet+".html")
-        os.rename(r"scripts/summarize/notebooks/"+sheet+".html", r"outputs/"+sheet+".html")
+    #for sheet in ['topsheet','metrics']:
+    #    with open("scripts/summarize/notebooks/"+sheet+".ipynb") as f:
+    #            nb = nbformat.read(f, as_version=4)
+    #    ep = ExecutePreprocessor(timeout=600, kernel_name='python2')
+    #    ep.preprocess(nb, {'metadata': {'path': 'scripts/summarize/notebooks/'}})
+    #    with open('scripts/summarize/notebooks/'+sheet+'.ipynb', 'wt') as f:
+    #        nbformat.write(nb, f)
+    #    os.system("jupyter nbconvert --to HTML scripts/summarize/notebooks/"+sheet+".ipynb")
+    #    # Move these files to output
+    #    if os.path.exists(r"outputs/"+sheet+".html"):
+    #        os.remove(r"outputs/"+sheet+".html")
+    #    os.rename(r"scripts/summarize/notebooks/"+sheet+".html", r"outputs/"+sheet+".html")
     # except:
     #     print 'Unable to produce topsheet'
 

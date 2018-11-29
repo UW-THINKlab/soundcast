@@ -591,6 +591,7 @@ def average_skims_to_hdf5_concurrent(my_project, average_skims):
     #Create the HDF5 Container if needed and open it in read/write mode using "r+"
     hdf5_filename = create_hdf5_skim_container2(my_project.tod)
     my_store = h5py.File(hdf5_filename, "r+")
+    print my_store.keys()
     #if averaging, load old skims in dictionary of numpy matrices
     if average_skims:
         np_old_matrices = {}
@@ -601,14 +602,14 @@ def average_skims_to_hdf5_concurrent(my_project, average_skims):
 
     e = "Skims" in my_store
     #Now delete "Skims" store if exists   
-    if e:
-        del my_store["Skims"]
-        skims_group = my_store.create_group("Skims")
-        print "Group Skims Exists. Group deleted then created"
-        #If not there, create the group
-    else:
-        skims_group = my_store.create_group("Skims")
-        print "Group Skims Created"
+    #if e:
+    #    del my_store["Skims"]
+    #    skims_group = my_store.create_group("Skims")
+    #    print "Group Skims Exists. Group deleted then created"
+    #    #If not there, create the group
+    #else:
+    #    skims_group = my_store.create_group("Skims")
+    #    print "Group Skims Created"
 
     #Load in the necessary Dictionaries
     matrix_dict = json_to_dictionary("user_classes")
@@ -618,6 +619,8 @@ def average_skims_to_hdf5_concurrent(my_project, average_skims):
         mat_id=my_project.bank.matrix("mf01")
         emme_matrix = my_project.bank.matrix(mat_id)
         em_val = emme_matrix.get_data()
+        if my_store["Skims"]["indices"]:
+            del my_store["Skims"]["indices"]
         my_store["Skims"].create_dataset("indices", data=em_val.indices, compression='gzip')
 
     except RuntimeError:
@@ -647,40 +650,42 @@ def average_skims_to_hdf5_concurrent(my_project, average_skims):
             if average_skims:
                 matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
             #delete old skim so new one can be written out to h5 container
+            if my_store["Skims"][matrix_name]:
+                del my_store["Skims"][matrix_name]
             my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
             print matrix_name+' was transferred to the HDF5 container.'
 
         #transit
-    if my_project.tod in transit_skim_tod:
-        for item in transit_submodes:
-            matrix_name= 'ivtwa' + item
-            matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100)
-            #open old skim and average
-            #if average_skims:
-            #    matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
-            my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
-            print matrix_name+' was transferred to the HDF5 container.'
+    #if my_project.tod in transit_skim_tod:
+    #    for item in transit_submodes:
+    #        matrix_name= 'ivtwa' + item
+    #        matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100)
+    #        #open old skim and average
+    #        #if average_skims:
+    #        #    matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
+    #        my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
+    #        print matrix_name+' was transferred to the HDF5 container.'
 
-            # Must use light rail assignment
-            matrix_name= 'ivtwr' + item
-            matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100)
-            #open old skim and average
-            print matrix_name
-            #if average_skims:
-            #    matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
-            my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
-            print matrix_name+' was transferred to the HDF5 container.'
-        #Transit, All Modes:
-        dct_aggregate_transit_skim_names = json_to_dictionary('transit_skim_aggregate_matrix_names')
+    #        # Must use light rail assignment
+    #        matrix_name= 'ivtwr' + item
+    #        matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100)
+    #        #open old skim and average
+    #        print matrix_name
+    #        #if average_skims:
+    #        #    matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
+    #        my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
+    #        print matrix_name+' was transferred to the HDF5 container.'
+    #    #Transit, All Modes:
+    #    dct_aggregate_transit_skim_names = json_to_dictionary('transit_skim_aggregate_matrix_names')
 
-        for key, value in dct_aggregate_transit_skim_names.iteritems():
-            matrix_name= key
-            matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100)
-            #open old skim and average
-            #if average_skims:
-            #    matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
-            my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
-            print matrix_name+' was transferred to the HDF5 container.'
+    #    for key, value in dct_aggregate_transit_skim_names.iteritems():
+    #        matrix_name= key
+    #        matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100)
+    #        #open old skim and average
+    #        #if average_skims:
+    #        #    matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
+    #        my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
+    #        print matrix_name+' was transferred to the HDF5 container.'
 
     #bike/walk
     if my_project.tod in bike_walk_skim_tod:
@@ -690,20 +695,23 @@ def average_skims_to_hdf5_concurrent(my_project, average_skims):
             #open old skim and average
             if average_skims:
                 matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
+            
+            if my_store["Skims"][matrix_name]:
+                del my_store["Skims"][matrix_name]
             my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
             print matrix_name+' was transferred to the HDF5 container.'
 
-    #transit/fare
-    fare_dict = json_to_dictionary('transit_fare_dictionary')
-    if my_project.tod in fare_matrices_tod:
-        for value in fare_dict[my_project.tod]['Names'].values():
-            matrix_name= 'mf' + value
-            matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100, 2000)
-            #open old skim and average
-            if average_skims:
-                matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
-            my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
-            print matrix_name+' was transferred to the HDF5 container.'
+    ##transit/fare
+    #fare_dict = json_to_dictionary('transit_fare_dictionary')
+    #if my_project.tod in fare_matrices_tod:
+    #    for value in fare_dict[my_project.tod]['Names'].values():
+    #        matrix_name= 'mf' + value
+    #        matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100, 2000)
+    #        #open old skim and average
+    #        if average_skims:
+    #            matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
+    #        my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
+    #        print matrix_name+' was transferred to the HDF5 container.'
 
     if my_project.tod in generalized_cost_tod:
         for value in gc_skims.values():
@@ -712,6 +720,8 @@ def average_skims_to_hdf5_concurrent(my_project, average_skims):
             #open old skim and average
             if average_skims:
                 matrix_value = average_matrices(np_old_matrices[matrix_name], matrix_value)
+            if my_store["Skims"][matrix_name]:
+                del my_store["Skims"][matrix_name]
             my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('float32'),compression='gzip')
             print matrix_name+' was transferred to the HDF5 container.'
 
@@ -1292,8 +1302,8 @@ def run_assignments_parallel(project_name):
 
     ##set up for assignments
     intitial_extra_attributes(my_project)
-    if my_project.tod in transit_tod:
-        calc_bus_pce(my_project)
+    #if my_project.tod in transit_tod:
+    #    calc_bus_pce(my_project)
 
     # ************arterial delay is being handled in network_importer for now. Leave commented!!!!!!!!!!!!!
     #arterial_delay_calc(my_project)
@@ -1342,7 +1352,7 @@ def main():
         #want pooled processes finished before executing more code in main:
         # run_assignments_parallel('projects/6to7/6to7.emp')
         
-        start_transit_pool(project_list)
+        #start_transit_pool(project_list)
         #run_transit('projects/20to5/20to5.emp')
        
         f = open('outputs/logs/converge.txt', 'w')
@@ -1364,6 +1374,8 @@ def main():
         for i in range (0, 12, parallel_instances):
                 l = project_list[i:i+parallel_instances]
                 export_to_hdf5_pool(l)
+        #my_project = EmmeProject('projects/5to6/5to6.emp')
+        #average_skims_to_hdf5_concurrent(my_project, False)
         
         #delete emme matrices to save space:
         #start_delete_matrices_pool(project_list)
