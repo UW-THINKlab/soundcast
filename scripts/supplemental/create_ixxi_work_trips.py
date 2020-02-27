@@ -54,6 +54,15 @@ def remove_employment_by_taz(df, taz_list, col_list):
             df.loc[df['TAZ_P'] == taz, col] = 0
     return df
 
+def update_column(df, update_df, df_index_col, update_df_index_col, update_col, new_col):
+    df.set_index(df_index_col, inplace = True)
+    update_df.set_index(update_df_index_col, inplace = True)
+    df[update_col] = 0
+    df[update_col].update(update_df[update_col])
+    df[new_col] = df[update_col]
+    df.reset_index(inplace = True)
+    update_df.reset_index(inplace = True)
+
 def main():
     """
     Add internal-external (ix) and external-internal (xi) distribution for work purpose. 
@@ -107,12 +116,16 @@ def main():
 
     # Load commute pattern data for workers in/out of PSRC region; keep only the needed columns
     # DB table "external_trip_distribution" generated from LEHD LODES data, 2014
-    work = pd.read_sql('SELECT * FROM external_trip_distribution', con=conn)
-    ixxi_cols = ['Total_IE', 'Total_EI', 'SOV_Veh_IE', 'SOV_Veh_EI','HOV2_Veh_IE','HOV2_Veh_EI','HOV3_Veh_IE','HOV3_Veh_EI']
-    work = work[['PSRC_TAZ','External_Station']+ixxi_cols]
+    #work = pd.read_sql('SELECT * FROM external_trip_distribution', con=conn)
+    ixxi_cols = ['sov_trips', 'hov2_trips', 'hov3_trips']
+    #work = work[['PSRC_TAZ','External_Station']+ixxi_cols]
+    ie_work = pd.read_csv('inputs/model/ie_work.csv')
+    ei_work = pd.read_csv('inputs/model/ei_work.csv')
+    military = pd.read_csv('inputs/model/military_trips.csv')
+    work = pd.concat([ie_work, ei_work, military])
 
     # group trips by O-D TAZ's (trips from external stations to internal TAZs)
-    w_grp = work.groupby(['PSRC_TAZ','External_Station']).sum()
+    w_grp = work.groupby(['otaz','dtaz']).sum()
 
     # Scale this based on forecasted employment growth between model and base year
     base_year_scaling = pd.read_sql('SELECT * FROM base_year_scaling', con=conn)
@@ -132,21 +145,23 @@ def main():
     w_HOV3 = np.zeros((zonesDim,zonesDim), np.float16)
 
     # Populate the numpy trips matrices; iterate through each internal TAZ (i) and External Station (j)
-    for i in work['PSRC_TAZ'].value_counts().keys():
-        for j in work.groupby('PSRC_TAZ').get_group(i)['External_Station'].value_counts().keys(): #all the external stations for each internal PSRC_TAZ
+    for i in work['otaz'].value_counts().keys():
+        for j in work.groupby('otaz').get_group(i)['dtaz'].value_counts().keys(): #all the external stations for each internal PSRC_TAZ
             #SOV
-            w_SOV[dictZoneLookup[i],dictZoneLookup[j]] = w_grp.loc[(i,j),'SOV_Veh_IE']
-            w_SOV[dictZoneLookup[j],dictZoneLookup[i]] = w_grp.loc[(i,j),'SOV_Veh_EI']
+            w_SOV[dictZoneLookup[i],dictZoneLookup[j]] = w_grp.loc[(i,j),'sov_trips']
+            #w_SOV[dictZoneLookup[j],dictZoneLookup[i]] = w_grp.loc[(i,j),'SOV_Veh_EI']
             #HOV2
-            w_HOV2[dictZoneLookup[i],dictZoneLookup[j]] = w_grp.loc[(i,j),'HOV2_Veh_IE']
-            w_HOV2[dictZoneLookup[j],dictZoneLookup[i]] = w_grp.loc[(i,j),'HOV2_Veh_EI']
+            w_HOV2[dictZoneLookup[i],dictZoneLookup[j]] = w_grp.loc[(i,j),'hov2_trips']
+            #w_HOV2[dictZoneLookup[j],dictZoneLookup[i]] = w_grp.loc[(i,j),'HOV2_Veh_EI']
             #HOV3
-            w_HOV3[dictZoneLookup[i],dictZoneLookup[j]] = w_grp.loc[(i,j),'HOV3_Veh_IE']
-            w_HOV3[dictZoneLookup[j],dictZoneLookup[i]] = w_grp.loc[(i,j),'HOV3_Veh_EI']
+            w_HOV3[dictZoneLookup[i],dictZoneLookup[j]] = w_grp.loc[(i,j),'hov3_trips']
+            #w_HOV3[dictZoneLookup[j],dictZoneLookup[i]] = w_grp.loc[(i,j),'HOV3_Veh_EI']
     # Get return trips (internal->external) by transposing external->internal trip table
     sov = w_SOV + w_SOV.transpose()
     hov2 = w_HOV2 + w_HOV2.transpose()
     hov3 = w_HOV3 + w_HOV3.transpose()
+
+    print np.sum(sov)
 
     matrix_dict = {'sov' : sov, 'hov2' : hov2, 'hov3' : hov3}
 
@@ -161,6 +176,7 @@ def main():
             my_store.create_dataset(str(mode), data=matrix)
         my_store.close()	
 
+
     ##################################################
     # Create "psrc_worker_ixxifractions" file
     # Update numworkers per TAZ
@@ -168,9 +184,9 @@ def main():
 
     w_grp.reset_index(inplace= True)
     w_grp.reset_index(inplace= True)
-    observed_ixxi = w_grp.groupby('PSRC_TAZ').sum()
-    observed_ixxi = observed_ixxi.reindex(zones, fill_value=0)
-    observed_ixxi.reset_index(inplace = True)
+    #observed_ixxi = w_grp.groupby('PSRC_TAZ').sum()
+    #observed_ixxi = observed_ixxi.reindex(zones, fill_value=0)
+    #observed_ixxi.reset_index(inplace = True)
 
     # Remove jobs from JBLM Military zones so they are NOT available in Daysim choice models
     # These jobs are assumed "locked" and not available to civilian uses so are excluded from choice sets
@@ -193,13 +209,38 @@ def main():
     # Calculate fraction of workers that do not work in the region, for each zone
     # Calculate fraction of jobs in each zone that are occupied by workers from external regions
     # These data are used to modify workplace location choices
-    final_df = emp_by_taz.merge(workers_by_taz, how='left', left_on='TAZ_P', right_on='hhtaz')
-    final_df = observed_ixxi.merge(final_df, how='left', left_on='PSRC_TAZ', right_on='TAZ_P')
-    final_df['Worker_IXFrac'] = final_df.Total_IE/final_df.workers
-    final_df['Jobs_XIFrac'] = final_df.Total_EI/final_df.EMPTOT_P
+    ie_work.rename(columns = {'S000' : 'Total_IE'}, inplace = True)
+    print ie_work.columns
+    ie_work = ie_work.groupby('otaz').sum()
+    ie_work = ie_work.reindex(zones, fill_value=0)
+    ie_work.reset_index(inplace = True)
+    
+    ei_work.rename(columns = {'S000' : 'Total_EI'}, inplace = True)
+    ei_work = ei_work.groupby('dtaz').sum()
+    ei_work = ei_work.reindex(zones, fill_value=0)
+    ei_work.reset_index(inplace = True)
+    #observed_ixxi = ie_work.merge(ei_work, how = 'inner', left_on = 'otaz', right_on = 'dtaz')
 
-    final_df.loc[final_df['Worker_IXFrac'] > 1, 'Worker_IXFrac'] = 1
-    final_df.loc[final_df['Jobs_XIFrac'] > 1, 'Jobs_XIFrac'] = 1
+    df = emp_by_taz.merge(workers_by_taz, how='left', left_on='TAZ_P', right_on='hhtaz')
+    print len(df)
+    ie_df = ie_work.merge(df, how='left', left_on='otaz', right_on='TAZ_P')
+    print len(ie_df)
+    print ie_df.columns
+    ie_df['Worker_IXFrac'] = ie_df.Total_IE/ie_df.workers
+    ie_df.loc[ie_df['Worker_IXFrac'] > 1, 'Worker_IXFrac'] = 1
+    ie_df.rename(columns = {'otaz' : 'PSRC_TAZ'}, inplace = True)
+    ie_df.to_csv('d:/ie.csv')
+    
+    ei_df = ei_work.merge(df, how='left', left_on='dtaz', right_on='TAZ_P')
+    print len(ei_df)
+    ei_df['Jobs_XIFrac'] = ei_df.Total_EI/ei_df.EMPTOT_P
+    ei_df.loc[ei_df['Jobs_XIFrac'] > 1, 'Jobs_XIFrac'] = 1
+    ei_df.rename(columns = {'dtaz' : 'PSRC_TAZ'}, inplace = True)
+    ei_df.to_csv('d:/ei.csv')
+
+
+    final_df = ie_df.merge(ei_df, how = 'left', on = 'PSRC_TAZ')
+    print len(final_df) 
 
     final_df = final_df.replace([np.inf, -np.inf], np.nan) 
     final_df = final_df.fillna(0)

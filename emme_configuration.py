@@ -11,9 +11,9 @@ relative_gap = 0.0001      # Assignment Convergence Criteria
 best_relative_gap = 0.00  # Set to zero, only using relative gap as criteria
 normalized_gap = 0.00     # See above
 
-pop_sample = [1, 1, 1, 1]
+pop_sample = [20]
 # Assignment Iterations (must be same length as pop_sample:
-max_iterations_list = [100, 100, 100, 100, 100, 100, 100, 100, 100]
+max_iterations_list = [10]
 min_pop_sample_convergence_test = 10
 shadow_work = [2, 1, 1, 1]
 shadow_con = 30 #%RMSE for shadow pricing to consider being converged

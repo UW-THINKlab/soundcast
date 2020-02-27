@@ -551,7 +551,8 @@ def main():
     # Add in the External Trips
     all_purposes = trip_productions + trip_attractions
     for purpose in all_purposes:
-        df_taz[purpose] = df_taz[purpose] + revised_external_taz[purpose]
+        #df_taz[purpose] = df_taz[purpose] + revised_external_taz[purpose]
+        df_taz[purpose] = df_taz[purpose] + 1
     df_taz.to_csv(output_directory+'/5_add_externals.csv',index=True)
 
     # Zero out JBLM trips that were generated above (so only inlcude Shopping, HBO, OtO and WtO)
