@@ -69,11 +69,11 @@ def get_walk_bike_skim_data():
     return skim_dict
 
 def get_transit_skim_data():
-    transit_skim_dict = {'ivtwa' : 'ivtwa', 
-                         'iwtwa' : 'iwtwa',  
-                         'ndbwa' : 'ndbwa', 
-                         'xfrwa' : 'xfrwa',
-                         'auxwa' : 'auxwa',
+    transit_skim_dict = {'ivtwa' : 'ivtwair', 
+                         'iwtwa' : 'iwtwair',  
+                         'ndbwa' : 'ndbwair', 
+                         'xfrwa' : 'xfrwair',
+                         'auxwa' : 'auxwair',
                          'ivtwr' : 'ivtwr', 
                          'iwtwr' : 'iwtwr',  
                          'ndbwr' : 'ndbwr', 

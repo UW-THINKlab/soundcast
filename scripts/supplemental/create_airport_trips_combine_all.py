@@ -125,7 +125,7 @@ def split_tod_internal(airport_trips, tod_factors_df):
         ixxi_work_store.close()
 
         tod_dict['litrat'] = np.array(airport_trips['litrat']) * tod_df[tod_df['mode'] == 'transit']['value'].values[0]
-        tod_dict['trnst'] = np.array(airport_trips['trnst']) * tod_df[tod_df['mode'] == 'transit']['value'].values[0]
+        tod_dict['airport_transit'] = np.array(airport_trips['airport_transit']) * tod_df[tod_df['mode'] == 'transit']['value'].values[0]
         tod_dict['walk'] = np.array(airport_trips['walk']) * tod_df[tod_df['mode'] == 'sov']['value'].values[0]
         tod_dict['bike'] = np.array(airport_trips['bike']) * tod_df[tod_df['mode'] == 'sov']['value'].values[0]
         matrix_dict[tod] = tod_dict
@@ -158,7 +158,7 @@ def main():
 
     mode_dict = {'walk':'nwshwk', 
                  'bike':'nwshbk',
-                 'trnst':'nwshtw',
+                 'airport_transit':'nwshtw',
                  'litrat':'nwshrw',
                  'sov': 'nwshda', 
                  'hov2':'nwshs2', 

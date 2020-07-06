@@ -98,6 +98,9 @@ def define_matrices(my_project):
                 my_project.create_matrix(matrix_dict[emme_matrix_subgroups[x]][y]["Name"],
                           matrix_dict[emme_matrix_subgroups[x]][y]["Description"], "FULL")
 
+    # create airport demand matrix
+    my_project.create_matrix('airport_transit', 'airport_transit_demand', "FULL")
+    
     # Create the Highway Skims in Emme
         #Check to see if we want to make Distance skims for this period:
     if my_project.tod in distance_skim_tod:
@@ -519,12 +522,12 @@ def average_skims_to_hdf5_concurrent(my_project, average_skims):
     # Transit Skims
     if my_project.tod in transit_skim_tod:
     	# assignment path types - a: all, r: light rail, f: ferry, c: commuter rail, p: passenger ferry
-        for path_mode in ['a','r','f','c','p']:    
+        for path_mode in ['a','r','f','c','p']:
             for item in transit_submodes:
-                matrix_name= 'ivtw' + path_mode + item
-                matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100)
-                my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
-                print(matrix_name+' was transferred to the HDF5 container.')
+                    matrix_name= 'ivtw' + path_mode + item
+                    matrix_value = emmeMatrix_to_numpyMatrix(matrix_name, my_project.bank, 'uint16', 100)
+                    my_store["Skims"].create_dataset(matrix_name, data=matrix_value.astype('uint16'),compression='gzip')
+                    print(matrix_name+' was transferred to the HDF5 container.')
 
         dct_aggregate_transit_skim_names = json_to_dictionary('transit_skim_aggregate_matrix_names', 'transit')
 
@@ -640,7 +643,7 @@ def hdf5_trips_to_Emme(my_project, hdf_filename):
         
     # Load in supplemental trips
     # We're assuming all trips are only for income 2, toll classes
-    for matrix_name in ['sov_inc2', 'hov2_inc2', 'hov3_inc2', 'litrat', 'trnst', 'bike', 'walk']:
+    for matrix_name in ['sov_inc2', 'hov2_inc2', 'hov3_inc2', 'litrat', 'airport_transit', 'bike', 'walk']:
         demand_matrix = load_supplemental_trips(my_project, matrix_name, zonesDim)
         demand_matrices.update({matrix_name : demand_matrix})
 
@@ -759,7 +762,7 @@ def load_supplemental_trips(my_project, matrix_name, zonesDim):
     demand_matrix = np.zeros((zonesDim,zonesDim), np.float16)
     hdf_file = h5py.File(os.path.join(supplemental_output_dir,tod + '.h5'), "r")
     # Call correct mode name by removing income class value when needed
-    if matrix_name not in ['bike', 'litrat', 'trnst', 'walk']:
+    if matrix_name not in ['bike', 'litrat', 'airport_transit', 'walk']:
         mode_name = matrix_name.split('_')[0]
 
     else:
@@ -861,7 +864,7 @@ def run_transit(project_name):
     transit_skims(m, "transit/transit_skim_setup")
 
     # Transit submode demand:
-    for submode in ['light_rail','ferry','passenger_ferry','commuter_rail']:
+    for submode in ['light_rail','ferry','passenger_ferry','commuter_rail', 'airport_transit']:
         transit_assignment(m, "transit/extended_transit_assignment_"+submode, True)
         transit_skims(m, "transit/transit_skim_setup_"+submode)    
 
@@ -881,7 +884,7 @@ def run_transit(project_name):
     matrix_calc(mod_calc)
     
     # Wait times for transit submodes
-    for submode in ['r','f','p','c']:
+    for submode in ['r','f','p','c', 'air']:
 
         total_wait_matrix = my_bank.matrix('twtw'+submode).id
         initial_wait_matrix = my_bank.matrix('iwtw'+submode).id
@@ -1076,7 +1079,7 @@ def main():
         
         start_transit_pool(project_list)
         
-        # run_transit(r'projects/8to9/8to9.emp')
+        #run_transit(r'projects/8to9/8to9.emp')
        
         f = open('outputs/logs/converge.txt', 'w')
        
@@ -1097,7 +1100,7 @@ def main():
         for i in range (0, 12, parallel_instances):
             l = project_list[i:i+parallel_instances]
             export_to_hdf5_pool(l)
-        # average_skims_to_hdf5_concurrent(EmmeProject('projects/8to9/8to9.emp'), False)
+        #average_skims_to_hdf5_concurrent(EmmeProject('projects/8to9/8to9.emp'), False)
            
         f.close()
 
