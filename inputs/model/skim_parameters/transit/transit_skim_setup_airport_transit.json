@@ -1,0 +1,22 @@
+{
+"spec1" :[
+{
+    "by_mode_subset": {
+        "modes": [
+            "b",
+            "c",
+            "f",
+            "p",
+            "r",
+            "w",
+            "x"
+        ],
+        "actual_in_vehicle_times": "mfivtwf",
+        "actual_aux_transit_times": "mfauxwf",
+        "avg_boardings": "mfndbwf"
+    },
+    "type": "EXTENDED_TRANSIT_MATRIX_RESULTS",
+    "actual_first_waiting_times": "mfiwtwf",
+    "actual_total_waiting_times": "mftwtwf"
+}]
+}
